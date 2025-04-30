@@ -32,8 +32,6 @@ hook.Add("ShutDown","ShutDown",function()
     render.SetRenderTarget()
 end)
 
-surface.CreateFont("lv",{font="Calibri",size=14,weight=250,extended=true})
-
 local function v1(ply)
     local zteam=ply:Team()
     if rp and rp.GetJobWithoutDisguise then
@@ -47,20 +45,16 @@ end
 
 lv.frame = vgui.CreateX("EditablePanel")
 
-local function Slider(name,x,y,varName,min,max,default,parent,step)
+local function Slider(x,y,key,min,max,step)
     step=step or 1
-    lv.cfg[varName]=math.Clamp(lv.cfg[varName]or default,min,max)
-    local slider=vgui.Create("DPanel",parent)
+    lv.cfg[key]=math.Clamp(lv.cfg[key]or min,min,max)
+    local slider=vgui.Create("DPanel",lv.frame)
     slider:SetPos(x,y)
     local w,h=70,11
     slider:SetSize(w,h)
-    local lbl=vgui.Create("DLabel",parent)
-    lbl:SetPos(x,y-15)
-    lbl:SetText("")
-    lbl:SizeToContents()
     function slider:Paint(w,h)
         draw.RoundedBox(6,0,h/3,w,h/3,color_black)
-        local frac=(lv.cfg[varName]-min)/(max-min)
+        local frac=(lv.cfg[key]-min)/(max-min)
         local fillw=math.Clamp(frac*w,0,w)
         local fillh=h*0.4
         local fillY=(h-fillh)/2
@@ -81,46 +75,39 @@ local function Slider(name,x,y,varName,min,max,default,parent,step)
             local frac=math.Clamp(lx/w,0,1)
             local rawval=min+frac*(max-min)
             local stepval=math.Round(rawval/step)*step
-            lv.cfg[varName]=math.Clamp(stepval,min,max)
+            lv.cfg[key]=math.Clamp(stepval,min,max)
         end
     end
 end
 
-local function Checkbox(parent,name,key,x,y)
-    local pan=vgui.Create("Panel",parent)
-    pan:SetPos(x,y)
-    pan:SetSize(12,12)
-    local lbl=vgui.Create("DPanel",parent)
-    lbl:SetPos(x+18,y)
-    function lbl:Paint(w,h)
-        surface.SetTextColor(color_white)
-        surface.SetFont("lv")
-        local textw,texth=surface.GetTextSize(name)
-        self:SetSize(textw,texth)
-        surface.SetTextPos(0,h/2-texth/1.6)
-        surface.DrawText(name)
+local function Checkbox(key,y)
+    local chk=vgui.Create("DCheckBox",lv.frame)
+    chk:SetPos(10,y)
+    chk:SetValue(lv.cfg[key])
+    function chk:OnChange(val)
+        lv.cfg[key]=val
     end
-    function pan:Paint(w,h)
-        local v=lv.cfg[key]
+    function chk:Paint(w,h)
         surface.SetDrawColor(12,12,12)
         surface.DrawOutlinedRect(0,0,w,h,1)
         surface.SetDrawColor(21,21,21)
         surface.DrawRect(0,0,w,h)
-        if v then
+        if self:GetChecked()then
             surface.SetDrawColor(99,99,99)
-            surface.DrawRect(0,0,w,h)
+            surface.DrawRect(3,3,w-6,h-6)
         end
     end
-    function pan:OnMousePressed()
-        lv.cfg[key]=not lv.cfg[key]
-    end
-    return pan
+    local lbl=vgui.Create("DLabel",lv.frame)
+    lbl:SetPos(30,y-2)
+    lbl:SetText(key)
+    lbl:SizeToContents()
+    return chk
 end
 
 do
     F=lv.frame
     F:SetFocusTopLevel(true)
-    F:SetSize(ScrW()/8,ScrH()/4)
+    F:SetSize(230,230)
     F:SetPos(100,100)
     F:SetPaintBackgroundEnabled(false)
     F:SetPaintBorderEnabled(false)
@@ -133,26 +120,26 @@ do
         surface.DrawRect(0,30,w,2)
         surface.SetDrawColor(22,22,22)
         surface.DrawOutlinedRect(0,0,w,h,5)
-        surface.SetFont("lv")
         surface.SetTextColor(color_white)
         surface.SetTextPos(10,10)
+        surface.SetFont("DermaDefault")
         surface.DrawText("lv render")
     end
     function F:Think()
         local x,y=input.GetCursorPos()
-        local mouseX,mouseY=math.Clamp(x,1,ScrW()-1),math.Clamp(y,1,ScrH()-1)
+        local mx,my=math.Clamp(x,1,ScrW()-1),math.Clamp(y,1,ScrH()-1)
         if F.Dragging then
-            F:SetPos(mouseX-F.Dragging[1],mouseY-F.Dragging[2])
+            F:SetPos(mx-F.Dragging[1],my-F.Dragging[2])
         end
     end
     function F:OnMousePressed()
         local x,y=input.GetCursorPos()
-        local screenX,screenY=self:LocalToScreen(0,0)
+        local scrx,scry=self:LocalToScreen(0,0)
         local w,h=self:GetSize()
-        if x>screenX+w-20 and y>screenY+h-20 then
+        if x>scrx+w-20 and y>scry+h-20 then
             self.Resizing=true
             self:MouseCapture(true)
-        elseif y<screenY+850 then
+        elseif y<scry+850 then
             self.Dragging={x-self.x,y-self.y}
             self:MouseCapture(true)
         end
@@ -165,14 +152,14 @@ do
         local padL,padT,padR,padB=self:GetDockPadding()
         local pw,ph=w-padL-padR,h-padT-padB
     end
-    Checkbox(lv.frame,"ESP","ESP",10,45)
-    Checkbox(lv.frame,"Box","Box",10,65)
-    Checkbox(lv.frame,"Name","Name",10,85)
-    Checkbox(lv.frame,"Health","HP",10,105)
-    Checkbox(lv.frame,"Weapon","Wep",10,125)
-    Checkbox(lv.frame,"Role","Role",10,145)
-    Checkbox(lv.frame,"Rank","Rank",10,165)
-    Slider("",10,185,"Dist",500,10000,50,lv.frame)
+    Checkbox("ESP",45)
+    Checkbox("Box",65)
+    Checkbox("Name",85)
+    Checkbox("HP",105)
+    Checkbox("Wep",125)
+    Checkbox("Role",145)
+    Checkbox("Rank",165)
+    Slider(10,185,"Dist",500,10000,1)
 end
 
 local function v2()
@@ -182,14 +169,14 @@ local function v2()
         end
     end
     kd = input.IsKeyDown(74)
-    if input.IsKeyDown(73) and not kd_del then
+    if input.IsKeyDown(73) and not del then
         if IsValid(lv.frame) then
             lv.frame:Remove()
         end
         hook.Remove("DrawOverlay","Simple")
         hook.Remove("Think","DecorProps")
     end
-    kd_del = input.IsKeyDown(73)
+    del = input.IsKeyDown(73)
 end
 hook.Add("Think","DecorProps",v2)
 
@@ -208,20 +195,20 @@ local function v3()
             local h=pos.y-pos2.y
             local w=h/2
             if lv.cfg.Name then
-                draw.SimpleTextOutlined(a:Nick(),"lv",pos.x,pos2.y-2,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,Color(0,0,0))
+                draw.SimpleTextOutlined(a:Nick(),"default",pos.x,pos2.y-2,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,Color(0,0,0))
             end
             if lv.cfg.Rank then
-                draw.SimpleTextOutlined(a:GetUserGroup(),"lv",pos.x,pos2.y-10,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,Color(0,0,0))
+                draw.SimpleTextOutlined(a:GetUserGroup(),"default",pos.x,pos2.y-10,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,Color(0,0,0))
             end
             if lv.cfg.Wep then
                 local z=a:GetActiveWeapon()
                 if IsValid(z) then
                     local gun=z:GetPrintName():lower()
-                    draw.SimpleTextOutlined(gun,"lv",pos.x,pos.y+5,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,Color(0,0,0))
+                    draw.SimpleTextOutlined(gun,"default",pos.x,pos.y+5,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,Color(0,0,0))
                 end
             end
             if lv.cfg.Role then
-                draw.SimpleTextOutlined((select(2,v1(a))),"lv",pos.x,pos.y+(lv.cfg.Wep and 16 or 5),select(3,v1(a)),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,Color(0,0,0))
+                draw.SimpleTextOutlined((select(2,v1(a))),"default",pos.x,pos.y+(lv.cfg.Wep and 16 or 5),select(3,v1(a)),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,Color(0,0,0))
             end
             if lv.cfg.HP then
                 local hp=math.Clamp(a:Health(),0,100)
