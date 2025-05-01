@@ -181,57 +181,50 @@ end
 hook.Add("Think","DecorProps",v2)
 
 local function v3()
-    local plys = player.GetAll()
+    local plys=player.GetAll()
     for i=1,#plys do
         local a=plys[i]
-        if lv.cfg.ESP then
-            if a==me or not a:Alive() or me:GetPos():DistToSqr(a:GetPos())>lv.cfg.Dist^2 then continue end
-            surface.SetAlphaMultiplier(a:IsDormant() and 0.4 or 1)
-            local pos=a:GetPos()
-            local min,max=a:OBBMins(),a:OBBMaxs()
-            local pos2=pos+Vector(min.x,0,max.z)
-            pos=pos:ToScreen()
-            pos2=pos2:ToScreen()
-            local h=pos.y-pos2.y
-            local w=h/2
-            if lv.cfg.Name then
-                draw.SimpleTextOutlined(a:Nick(),"default",pos.x,pos2.y-2,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,Color(0,0,0))
+        if not lv.cfg.ESP or a==me or not a:Alive() or me:GetPos():DistToSqr(a:GetPos())>lv.cfg.Dist^2 then continue end
+        surface.SetAlphaMultiplier(a:IsDormant() and 0.4 or 1)
+        local cw = color_white
+        local pos=a:GetPos()
+        local min,max=a:OBBMins(),a:OBBMaxs()
+        local pos2=(pos+Vector(min.x,0,max.z)):ToScreen()
+        pos=pos:ToScreen()
+        local h,w=pos.y-pos2.y,(pos.y-pos2.y)/2
+        if lv.cfg.Name then
+            draw.SimpleTextOutlined(a:Nick(),"default",pos.x,pos2.y-2,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)
+        end
+        if lv.cfg.Rank then
+            draw.SimpleTextOutlined(a:GetUserGroup(),"default",pos.x,pos2.y-10,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)
+        end
+        if lv.cfg.Wep then
+            local z=a:GetActiveWeapon()
+            if IsValid(z) then
+                draw.SimpleTextOutlined(z:GetPrintName():lower(),"default",pos.x,pos.y+5,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,color_black)
             end
-            if lv.cfg.Rank then
-                draw.SimpleTextOutlined(a:GetUserGroup(),"default",pos.x,pos2.y-10,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,Color(0,0,0))
-            end
-            if lv.cfg.Wep then
-                local z=a:GetActiveWeapon()
-                if IsValid(z) then
-                    local gun=z:GetPrintName():lower()
-                    draw.SimpleTextOutlined(gun,"default",pos.x,pos.y+5,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,Color(0,0,0))
-                end
-            end
-            if lv.cfg.Role then
-                draw.SimpleTextOutlined((select(2,v1(a))),"default",pos.x,pos.y+(lv.cfg.Wep and 16 or 5),select(3,v1(a)),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,Color(0,0,0))
-            end
-            if lv.cfg.HP then
-                local hp=math.Clamp(a:Health(),0,100)
-                local clr=HSVToColor(hp/100*120,1,1)
-                if a:Health()<=100 then
-                    surface.SetDrawColor(Color(20,20,20))
-                    surface.DrawRect(pos.x-w/2-5,pos2.y-1,w/w+2,h+2)
-                    surface.SetDrawColor(clr)
-                    surface.DrawRect(pos.x-w/2-4,pos.y-h/100*a:Health(),w/w,h/100*a:Health())
-                else
-                    surface.SetDrawColor(Color(20,20,20))
-                    surface.DrawRect(pos.x-w/2-5,pos2.y-1,w/w+2,h+2)
-                    surface.SetDrawColor(clr)
-                    surface.DrawRect(pos.x-w/2-4,pos.y-h,w/w,h)
-                end
-            end
-            if lv.cfg.Box then
-                surface.SetDrawColor(select(3,v1(a)))
-                surface.DrawOutlinedRect(pos.x-w/2,pos2.y,w,h)
-                surface.SetDrawColor(0,0,0)
-                surface.DrawOutlinedRect(pos.x-w/2-1,pos2.y-1,w+2,h+2,1)
-                surface.DrawOutlinedRect(pos.x-w/2+1,pos2.y+1,w-2,h-2,1)
-            end
+        end
+        if lv.cfg.Role then
+            local role,clr=select(2,v1(a)),select(3,v1(a))
+            draw.SimpleTextOutlined(role,"default",pos.x,pos.y+(lv.cfg.Wep and 16 or 5),clr,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,color_black)
+        end
+        if lv.cfg.HP then
+            local hp=math.Clamp(a:Health(),0,100)
+            local hh=h/100*hp
+            local clr=HSVToColor(hp/100*120,1,1)
+            local x=pos.x-w/2-5
+            surface.SetDrawColor(20,20,20)
+            surface.DrawRect(x,pos2.y-1,w/w+2,h+2)
+            surface.SetDrawColor(clr)
+            surface.DrawRect(x+1,pos.y-(a:Health()>100 and h or hh),w/w,(a:Health()>100 and h or hh))
+        end
+        if lv.cfg.Box then
+            local clr=select(3,v1(a))
+            surface.SetDrawColor(clr)
+            surface.DrawOutlinedRect(pos.x-w/2,pos2.y,w,h)
+            surface.SetDrawColor(0,0,0)
+            surface.DrawOutlinedRect(pos.x-w/2-1,pos2.y-1,w+2,h+2)
+            surface.DrawOutlinedRect(pos.x-w/2+1,pos2.y+1,w-2,h-2)
         end
     end
 end
