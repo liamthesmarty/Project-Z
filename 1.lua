@@ -1,4 +1,6 @@
 local me=LocalPlayer()
+local cw=color_white
+local cb=color_black
 local lv={}
 lv.cfg = {Dist=3500}
 local tar = GetRenderTarget("1" .. os.time(), ScrW(), ScrH())
@@ -32,17 +34,6 @@ hook.Add("ShutDown","ShutDown",function()
     render.SetRenderTarget()
 end)
 
-local function v1(ply)
-    local zteam=ply:Team()
-    if rp and rp.GetJobWithoutDisguise then
-        local index=rp.GetJobWithoutDisguise(ply:EntIndex())
-        local tbl=rp.jobs.List[index]
-        return index,tbl.Name,tbl.Color
-    else
-        return zteam,team.GetName(zteam),team.GetColor(zteam)
-    end
-end
-
 lv.frame = vgui.CreateX("EditablePanel")
 
 local function Slider(x,y,key,min,max,step)
@@ -53,7 +44,7 @@ local function Slider(x,y,key,min,max,step)
     local w,h=70,11
     slider:SetSize(w,h)
     function slider:Paint(w,h)
-        draw.RoundedBox(6,0,h/3,w,h/3,color_black)
+        draw.RoundedBox(6,0,h/3,w,h/3,cb)
         local frac=(lv.cfg[key]-min)/(max-min)
         local fillw=math.Clamp(frac*w,0,w)
         local fillh=h*0.4
@@ -107,7 +98,7 @@ end
 do
     F=lv.frame
     F:SetFocusTopLevel(true)
-    F:SetSize(230,230)
+    F:SetSize(200,200)
     F:SetPos(100,100)
     F:SetPaintBackgroundEnabled(false)
     F:SetPaintBorderEnabled(false)
@@ -116,14 +107,6 @@ do
     function F:Paint(w,h)
         surface.SetDrawColor(30,30,30)
         surface.DrawRect(0,0,w,h)
-        surface.SetDrawColor(99,99,99)
-        surface.DrawRect(0,30,w,2)
-        surface.SetDrawColor(22,22,22)
-        surface.DrawOutlinedRect(0,0,w,h,5)
-        surface.SetTextColor(color_white)
-        surface.SetTextPos(10,10)
-        surface.SetFont("DermaDefault")
-        surface.DrawText("lv render")
     end
     function F:Think()
         local x,y=input.GetCursorPos()
@@ -152,16 +135,15 @@ do
         local padL,padT,padR,padB=self:GetDockPadding()
         local pw,ph=w-padL-padR,h-padT-padB
     end
-    Checkbox("ESP",45)
-    Checkbox("Box",65)
-    Checkbox("Name",85)
-    Checkbox("HP",105)
-    Checkbox("Wep",125)
-    Checkbox("Role",145)
-    Checkbox("Rank",165)
-    Slider(10,185,"Dist",500,10000,1)
+    Checkbox("ESP",15)
+    Checkbox("Box",35)
+    Checkbox("Name",55)
+    Checkbox("HP",75)
+    Checkbox("Wep",95)
+    Checkbox("Role",115)
+    Checkbox("Rank",135)
+    Slider(10,155,"Dist",500,10000,0.1)
 end
-
 local function v2()
     if input.IsKeyDown(74) and not kd then
         if IsValid(lv.frame) then
@@ -173,41 +155,38 @@ local function v2()
         if IsValid(lv.frame) then
             lv.frame:Remove()
         end
-        hook.Remove("DrawOverlay","Simple")
-        hook.Remove("Think","DecorProps")
+        hook.Remove("DrawOverlay","DrawOverlay")
+        hook.Remove("Think","Think")
     end
     del = input.IsKeyDown(73)
 end
-hook.Add("Think","DecorProps",v2)
-
+hook.Add("Think","Think",v2)
 local function v3()
     local plys=player.GetAll()
     for i=1,#plys do
         local a=plys[i]
         if not lv.cfg.ESP or a==me or not a:Alive() or me:GetPos():DistToSqr(a:GetPos())>lv.cfg.Dist^2 then continue end
         surface.SetAlphaMultiplier(a:IsDormant() and 0.4 or 1)
-        local cw = color_white
         local pos=a:GetPos()
         local min,max=a:OBBMins(),a:OBBMaxs()
         local pos2=(pos+Vector(min.x,0,max.z)):ToScreen()
         pos=pos:ToScreen()
         local h,w=pos.y-pos2.y,(pos.y-pos2.y)/2
         if lv.cfg.Name then
-            draw.SimpleTextOutlined(a:Nick(),"default",pos.x,pos2.y-2,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)
+            draw.SimpleTextOutlined(a:Nick(),"default",pos.x,pos2.y-2,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,cb)
         end
         if lv.cfg.Rank then
-            draw.SimpleTextOutlined(a:GetUserGroup(),"default",pos.x,pos2.y-10,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)
+            draw.SimpleTextOutlined(a:GetUserGroup(),"default",pos.x,pos2.y-10,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,cb)
         end
         if lv.cfg.Wep then
             local z=a:GetActiveWeapon()
             if IsValid(z) then
-                draw.SimpleTextOutlined(z:GetPrintName():lower(),"default",pos.x,pos.y+5,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,color_black)
+                draw.SimpleTextOutlined(z:GetPrintName():lower(),"default",pos.x,pos.y+5,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,cb)
             end
         end
         if lv.cfg.Role then
-            local role,clr=select(2,v1(a)),select(3,v1(a))
-            draw.SimpleTextOutlined(role,"default",pos.x,pos.y+(lv.cfg.Wep and 16 or 5),clr,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,color_black)
-        end
+            draw.SimpleTextOutlined(team.GetName(a:Team()),"default",pos.x,pos.y+(lv.cfg.Wep and 16 or 5),cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,cb)
+        end        
         if lv.cfg.HP then
             local hp=math.Clamp(a:Health(),0,100)
             local hh=h/100*hp
@@ -219,8 +198,7 @@ local function v3()
             surface.DrawRect(x+1,pos.y-(a:Health()>100 and h or hh),w/w,(a:Health()>100 and h or hh))
         end
         if lv.cfg.Box then
-            local clr=select(3,v1(a))
-            surface.SetDrawColor(clr)
+            surface.SetDrawColor(team.GetColor(a:Team()))
             surface.DrawOutlinedRect(pos.x-w/2,pos2.y,w,h)
             surface.SetDrawColor(0,0,0)
             surface.DrawOutlinedRect(pos.x-w/2-1,pos2.y-1,w+2,h+2)
@@ -228,4 +206,4 @@ local function v3()
         end
     end
 end
-hook.Add("DrawOverlay","Simple",v3)
+hook.Add("DrawOverlay","DrawOverlay",v3)
