@@ -25,11 +25,9 @@ hook.Run("HUDPaintZ")
 cam.End2D()
 render.SetRenderTarget(tar)
 end
-
 hook.Add("RenderScene","RenderScene",function(vOrigin, vAngle, vFOV)
     v0(vOrigin, vAngle, vFOV)
 end)
-
 hook.Add("ShutDown","ShutDown",function()
     render.SetRenderTarget()
 end)
@@ -157,11 +155,10 @@ local function v2()
         if lv.cfg.HP then
             local hp=math.Clamp(a:Health(),0,100)
             local hh=h/100*hp
-            local clr=HSVToColor(hp/100*120,1,1)
             local x=pos.x-w/2-5
             surface.SetDrawColor(20,20,20)
             surface.DrawRect(x,pos2.y-1,w/w+2,h+2)
-            surface.SetDrawColor(clr)
+            surface.SetDrawColor(HSVToColor(hp/100*120,1,1))
             surface.DrawRect(x+1,pos.y-(a:Health()>100 and h or hh),w/w,(a:Health()>100 and h or hh))
         end
         if lv.cfg.Box then
