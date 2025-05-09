@@ -1,4 +1,4 @@
-local me=LocalPlayer()
+local x=LocalPlayer()
 local cw=color_white
 local cb=color_black
 local lv={}
@@ -21,7 +21,7 @@ drawviewmodel=true
 render.RenderView(view)
 render.CopyTexture(nil, tar)
 cam.Start2D()
-hook.Run("AltHUDPaint")
+hook.Run("HUDPaintZ")
 cam.End2D()
 render.SetRenderTarget(tar)
 end
@@ -71,14 +71,16 @@ local function Slider(x,y,key,min,max,step)
     end
 end
 
-local function Checkbox(key,y)
-    local chk=vgui.Create("DCheckBox",lv.frame)
+local function Chkbox(key,y)
+    local chk=vgui.Create("DCheckBoxLabel",lv.frame)
     chk:SetPos(10,y)
+    chk:SetText(key)
     chk:SetValue(lv.cfg[key])
+    chk:SizeToContents()
     function chk:OnChange(val)
         lv.cfg[key]=val
     end
-    function chk:Paint(w,h)
+    function chk.Button:Paint(w,h)
         surface.SetDrawColor(12,12,12)
         surface.DrawOutlinedRect(0,0,w,h,1)
         surface.SetDrawColor(21,21,21)
@@ -88,10 +90,6 @@ local function Checkbox(key,y)
             surface.DrawRect(3,3,w-6,h-6)
         end
     end
-    local lbl=vgui.Create("DLabel",lv.frame)
-    lbl:SetPos(30,y-2)
-    lbl:SetText(key)
-    lbl:SizeToContents()
     return chk
 end
 
@@ -100,51 +98,20 @@ do
     F:SetFocusTopLevel(true)
     F:SetSize(200,200)
     F:SetPos(100,100)
-    F:SetPaintBackgroundEnabled(false)
-    F:SetPaintBorderEnabled(false)
-    F:DockPadding(5,60,5,5)
     F:MakePopup()
     function F:Paint(w,h)
         surface.SetDrawColor(30,30,30)
         surface.DrawRect(0,0,w,h)
     end
-    function F:Think()
-        local x,y=input.GetCursorPos()
-        local mx,my=math.Clamp(x,1,ScrW()-1),math.Clamp(y,1,ScrH()-1)
-        if F.Dragging then
-            F:SetPos(mx-F.Dragging[1],my-F.Dragging[2])
-        end
-    end
-    function F:OnMousePressed()
-        local x,y=input.GetCursorPos()
-        local scrx,scry=self:LocalToScreen(0,0)
-        local w,h=self:GetSize()
-        if x>scrx+w-20 and y>scry+h-20 then
-            self.Resizing=true
-            self:MouseCapture(true)
-        elseif y<scry+850 then
-            self.Dragging={x-self.x,y-self.y}
-            self:MouseCapture(true)
-        end
-    end
-    function F:OnMouseReleased()
-        self.Dragging,self.Resizing=nil,nil
-        self:MouseCapture(false)
-    end
-    function F:PerformLayout(w,h)
-        local padL,padT,padR,padB=self:GetDockPadding()
-        local pw,ph=w-padL-padR,h-padT-padB
-    end
-    Checkbox("ESP",15)
-    Checkbox("Box",35)
-    Checkbox("Name",55)
-    Checkbox("HP",75)
-    Checkbox("Wep",95)
-    Checkbox("Role",115)
-    Checkbox("Rank",135)
-    Slider(10,155,"Dist",500,10000,0.1)
+    Chkbox("Box",15)
+    Chkbox("Name",35)
+    Chkbox("HP",55)
+    Chkbox("Wep",75)
+    Chkbox("Role",95)
+    Chkbox("Rank",115)
+    Slider(10,135,"Dist",500,10000,0.1)
 end
-local function v2()
+local function v1()
     if input.IsKeyDown(74) and not kd then
         if IsValid(lv.frame) then
             lv.frame:SetVisible(not lv.frame:IsVisible())
@@ -155,17 +122,17 @@ local function v2()
         if IsValid(lv.frame) then
             lv.frame:Remove()
         end
-        hook.Remove("DrawOverlay","DrawOverlay")
-        hook.Remove("Think","Think")
+        hook.Remove("DrawOverlay","a")
+        hook.Remove("Think","b")
     end
     del = input.IsKeyDown(73)
 end
-hook.Add("Think","Think",v2)
-local function v3()
+hook.Add("Think","b",v1)
+local function v2()
     local plys=player.GetAll()
     for i=1,#plys do
         local a=plys[i]
-        if not lv.cfg.ESP or a==me or not a:Alive() or me:GetPos():DistToSqr(a:GetPos())>lv.cfg.Dist^2 then continue end
+        if a==x or not a:Alive() or x:GetPos():DistToSqr(a:GetPos())>lv.cfg.Dist^2 then continue end
         surface.SetAlphaMultiplier(a:IsDormant() and 0.4 or 1)
         local pos=a:GetPos()
         local min,max=a:OBBMins(),a:OBBMaxs()
@@ -181,12 +148,12 @@ local function v3()
         if lv.cfg.Wep then
             local z=a:GetActiveWeapon()
             if IsValid(z) then
-                draw.SimpleTextOutlined(z:GetPrintName():lower(),"default",pos.x,pos.y+5,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,cb)
+                draw.SimpleTextOutlined(z:GetPrintName(),"default",pos.x,pos.y+5,cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,cb)
             end
         end
         if lv.cfg.Role then
             draw.SimpleTextOutlined(team.GetName(a:Team()),"default",pos.x,pos.y+(lv.cfg.Wep and 16 or 5),cw,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER,1,cb)
-        end        
+        end
         if lv.cfg.HP then
             local hp=math.Clamp(a:Health(),0,100)
             local hh=h/100*hp
@@ -206,4 +173,4 @@ local function v3()
         end
     end
 end
-hook.Add("DrawOverlay","DrawOverlay",v3)
+hook.Add("DrawOverlay","a",v2)
