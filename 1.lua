@@ -37,7 +37,6 @@ do
 local l=b.frame
 l:SetSize(99,130)
 l:SetPos(100,100)
-l:MakePopup()
 function l:Paint(n,m)surface.SetDrawColor(30,30,30)surface.DrawRect(0,0,n,m)end
 for p,r in ipairs(k)do
 local t=vgui.Create("DCheckBoxLabel",l)
@@ -63,14 +62,15 @@ w=input.IsKeyDown(9)
 if input.IsKeyDown(73)and not x then
 if IsValid(b.frame)then b.frame:Remove()end
 hook.Remove("HUDPaint","DrawRecordingIcon")
-hook.Remove("Think","DecorProps")
+hook.Remove("Think","DOFThink")
 end
 x=input.IsKeyDown(73)
 end
-hook.Add("Think","DecorProps",v)
+hook.Add("Think","DOFThink",v)
 local function y()
 local z=player.GetAll()
 for i=1,#z do
+f=true
 local j=z[i]
 if j==a or not j:Alive()or a:GetPos():DistToSqr(j:GetPos())>b.c.d^2 then continue end
 surface.SetAlphaMultiplier(j:IsDormant()and 0.4 or 1)
