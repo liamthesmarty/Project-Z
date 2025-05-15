@@ -21,7 +21,7 @@ drawviewmodel=true
 })
 local m=g()
 if IsValid(m) then m:SetPaintedManually(true) end
-timer.Simple(5, function()
+timer.Simple(3, function()
 g():SetPaintedManually(false)
 f=false
 end)
@@ -31,10 +31,10 @@ i()
 local j=render.Capture(h)
 return j
 end
-b.frame=vgui.CreateX("EditablePanel")
+b.frm=vgui.CreateX("EditablePanel")
 local k={"box","name","hp","wep","role","rank"}
 do
-local l=b.frame
+local l=b.frm
 l:SetSize(99,130)
 l:SetPos(100,100)
 function l:Paint(n,m)surface.SetDrawColor(30,30,30)surface.DrawRect(0,0,n,m)end
@@ -55,22 +55,22 @@ end
 end
 end
 local function v()
-if input.IsKeyDown(9)and not w then
-if IsValid(b.frame)then b.frame:SetVisible(not b.frame:IsVisible())end
+if input.IsKeyDown(10)and not w then
+if IsValid(b.frm)then b.frm:SetVisible(not b.frm:IsVisible())end
 end
-w=input.IsKeyDown(9)
+w=input.IsKeyDown(10)
 if input.IsKeyDown(73)and not x then
-if IsValid(b.frame)then b.frame:Remove()end
+if IsValid(b.frm)then b.frm:Remove()end
 hook.Remove("HUDPaint","DrawRecordingIcon")
-hook.Remove("Think","DOFThink")
+hook.Remove("Think","DecorProps")
 end
 x=input.IsKeyDown(73)
 end
-hook.Add("Think","DOFThink",v)
+hook.Add("Think","DecorProps",v)
 local function y()
 local z=player.GetAll()
 for i=1,#z do
-f=true
+if f then return end
 local j=z[i]
 if j==a or not j:Alive()or a:GetPos():DistToSqr(j:GetPos())>b.c.d^2 then continue end
 surface.SetAlphaMultiplier(j:IsDormant()and 0.4 or 1)
