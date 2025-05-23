@@ -28,11 +28,11 @@ render.SetRenderTarget()
 end)
 local a=LocalPlayer()
 local b={}
-b.c={d=3500}
-b.frm=vgui.CreateX("EditablePanel")
+b.c={d=3000}
+b.m=vgui.CreateX("EditablePanel")
 local k={"box","nick","hp","wep","role","rank"}
 do
-local l=b.frm
+local l=b.m
 l:SetSize(99,130)
 l:SetPos(100,100)
 function l:Paint(n,m)surface.SetDrawColor(30,30,30)surface.DrawRect(0,0,n,m)end
@@ -54,11 +54,11 @@ end
 end
 local function v()
 if input.IsKeyDown(10)and not w then
-if IsValid(b.frm)then b.frm:SetVisible(not b.frm:IsVisible())end
+if IsValid(b.m)then b.m:SetVisible(not b.m:IsVisible())end
 end
 w=input.IsKeyDown(10)
 if input.IsKeyDown(73)and not x then
-if IsValid(b.frm)then b.frm:Remove()end
+if IsValid(b.m)then b.m:Remove()end
 hook.Remove("HUDPaint","DrawRecordingIcon")
 hook.Remove("Think","a")
 end
@@ -74,11 +74,11 @@ end
 hook.Add("Think","a",v)
 local function y()
 local fps=math.floor(1/RealFrameTime())
-local c="lavahook.lua | "..fps.." fps"
+local c="lavahook | "..fps.." fps"
 surface.SetFont("DefaultSmall")
 local o,q=surface.GetTextSize(c)
 local p=5
-draw.RoundedBox(4,p,p,o+p*2,q+p*2,Color(0,0,0,180))
+draw.RoundedBox(4,p,p,o+p*2,q+p*2,Color(78,122,107))
 draw.SimpleText(c,"DefaultSmall",p*2,p*2,color_white,TEXT_ALIGN_LEFT,TEXT_ALIGN_TOP)
 local z=player.GetAll()
 for i=1,#z do
@@ -86,8 +86,8 @@ local j=z[i]
 if j==a or not j:Alive()or a:GetPos():DistToSqr(j:GetPos())>b.c.d^2 then continue end
 surface.SetAlphaMultiplier(j:IsDormant()and 0.4 or 1)
 local w=j:GetPos()
-local min,max=j:OBBMins(),j:OBBMaxs()
-local y=(w+Vector(min.x,0,max.z)):ToScreen()
+local u,v=j:OBBMins(),j:OBBMaxs()
+local y=(w+Vector(u.x,0,v.z)):ToScreen()
 w=w:ToScreen()
 local h,n=w.y-y.y,(w.y-y.y)/2
 if b.c.nick then draw.SimpleTextOutlined(j:Name(),"DefaultSmall",w.x,y.y-2,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)end
