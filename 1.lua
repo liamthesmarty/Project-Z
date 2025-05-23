@@ -1,38 +1,36 @@
+local s=GetRenderTarget("g" .. os.time(),ScrW(),ScrH())
+local function l(vOrigin,vAngle,vFOV)
+local h={
+x=0,
+y=0,
+w=ScrW(),
+h=ScrH(),
+dopostprocess=true,
+origin=vOrigin,
+angles=vAngle,
+fov=vFOV,
+drawhud=true,
+drawmonitors=true,
+drawhmodel=true
+}
+render.RenderView(h)
+render.CopyTexture(nil, s)
+cam.Start2D()
+hook.Run("HUDPaintZ")
+cam.End2D()
+render.SetRenderTarget(s)
+end
+hook.Add("RenderScene","RenderScene", function(vOrigin,vAngle,vFOV)
+l(vOrigin,vAngle,vFOV)
+end)
+hook.Add("ShutDown","ShutDown", function()
+render.SetRenderTarget()
+end)
 local a=LocalPlayer()
 local b={}
 b.c={d=3500}
-local f=false
-local g=vgui.GetWorldPanel
-local function i()
-if f then return end
-f=true
-render.Clear(0,0,0,255,true,true)
-render.RenderView({
-origin=a:EyePos(),
-angles=a:EyeAngles(),
-x=0,
-y=0;
-w=ScrW(),
-h=ScrH(),
-dopostprocess=true;
-drawhud=true;
-drawmonitors=true;
-drawviewmodel=true
-})
-local m=g()
-if IsValid(m) then m:SetPaintedManually(true) end
-timer.Simple(3, function()
-g():SetPaintedManually(false)
-f=false
-end)
-end
-render.Capture = function(h)
-i()
-local j=render.Capture(h)
-return j
-end
 b.frm=vgui.CreateX("EditablePanel")
-local k={"box","name","hp","wep","role","rank"}
+local k={"box","nick","hp","wep","role","rank"}
 do
 local l=b.frm
 l:SetSize(99,130)
@@ -62,15 +60,28 @@ w=input.IsKeyDown(10)
 if input.IsKeyDown(73)and not x then
 if IsValid(b.frm)then b.frm:Remove()end
 hook.Remove("HUDPaint","DrawRecordingIcon")
-hook.Remove("Think","DecorProps")
+hook.Remove("Think","a")
 end
 x=input.IsKeyDown(73)
 end
-hook.Add("Think","DecorProps",v)
+if IsValid(a:GetActiveWeapon()) then
+local r=a:GetActiveWeapon()
+if r:GetClass():find("weapon_octo") then
+r.VisualRecoilHorizontal = 0
+r.VisualRecoilVertical = 0
+end
+end
+hook.Add("Think","a",v)
 local function y()
+local fps=math.floor(1/RealFrameTime())
+local c="lavahook.lua | "..fps.." fps"
+surface.SetFont("DefaultSmall")
+local o,q=surface.GetTextSize(c)
+local p=5
+draw.RoundedBox(4,p,p,o+p*2,q+p*2,Color(0,0,0,180))
+draw.SimpleText(c,"DefaultSmall",p*2,p*2,color_white,TEXT_ALIGN_LEFT,TEXT_ALIGN_TOP)
 local z=player.GetAll()
 for i=1,#z do
-if f then return end
 local j=z[i]
 if j==a or not j:Alive()or a:GetPos():DistToSqr(j:GetPos())>b.c.d^2 then continue end
 surface.SetAlphaMultiplier(j:IsDormant()and 0.4 or 1)
@@ -79,7 +90,7 @@ local min,max=j:OBBMins(),j:OBBMaxs()
 local y=(w+Vector(min.x,0,max.z)):ToScreen()
 w=w:ToScreen()
 local h,n=w.y-y.y,(w.y-y.y)/2
-if b.c.name then draw.SimpleTextOutlined(j:Nick(),"DefaultSmall",w.x,y.y-2,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)end
+if b.c.nick then draw.SimpleTextOutlined(j:Name(),"DefaultSmall",w.x,y.y-2,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)end
 if b.c.rank then draw.SimpleTextOutlined(j:GetUserGroup(),"DefaultSmall",w.x,y.y-10,color_white,TEXT_ALIGN_CENTER,TEXT_ALIGN_BOTTOM,1,color_black)end
 if b.c.wep then
 local z=j:GetActiveWeapon()
@@ -89,7 +100,7 @@ if b.c.role then draw.SimpleTextOutlined(team.GetName(j:Team()),"DefaultSmall",w
 if b.c.hp then
 local hp=math.Clamp(j:Health(),0,100)
 local hh=n/100*hp
-local x=w.x-n/2-5
+local x=w.x-n/2-4
 surface.SetDrawColor(20,20,20)
 surface.DrawRect(x,y.y-1,n/n+2,h+2)
 surface.SetDrawColor(HSVToColor(hp/100*120,1,1))
